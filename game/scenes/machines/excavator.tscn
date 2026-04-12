@@ -1,0 +1,100 @@
+[gd_scene load_steps=4 format=3 uid="uid://excavator_scene"]
+
+[ext_resource type="Script" path="res://scripts/excavator_controller.gd" id="1_ctrl"]
+
+; -----------------------------------------------------------------------
+; Excavator scene hierarchy
+;
+; Excavator (RigidBody3D)          — undercarriage + tracks, moves on terrain
+;   Superstructure (Node3D)        — rotates (swing) around Y axis
+;     Boom (Node3D)                — rotates around local X (up/down)
+;       Arm (Node3D)               — rotates around local X (curl/extend)
+;         BucketPivot (Node3D)     — rotates around local X (dump/curl)
+;           BucketMesh             — visual
+;           BucketCollision        — Area3D used by BucketInteraction
+;           BucketContents         — Area3D: particles held inside
+;
+; Joint physics are handled by Jolt's HingeJoint3D nodes attached at each
+; pivot. PD controllers in excavator_controller.gd drive target angles.
+; -----------------------------------------------------------------------
+
+[node name="Excavator" type="RigidBody3D"]
+mass = 18000.0
+lock_rotation = false
+script = ExtResource("1_ctrl")
+
+; -- Undercarriage --
+[node name="Undercarriage" type="Node3D" parent="."]
+
+[node name="UndercarriageMesh" type="MeshInstance3D" parent="Undercarriage"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(2.4, 0.6, 3.2)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+
+[node name="UndercarriageCollision" type="CollisionShape3D" parent="Undercarriage"]
+shape = BoxShape3D(new("BoxShape3D", {"size": Vector3(2.4, 0.6, 3.2)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+
+; Track L/R placeholder meshes (cosmetic for now)
+[node name="TrackLeft" type="MeshInstance3D" parent="Undercarriage"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(0.4, 0.5, 3.4)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.4, 0.25, 0)
+
+[node name="TrackRight" type="MeshInstance3D" parent="Undercarriage"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(0.4, 0.5, 3.4)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.4, 0.25, 0)
+
+; -- Superstructure (swings on Y) --
+[node name="Superstructure" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+
+[node name="CabMesh" type="MeshInstance3D" parent="Superstructure"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(1.8, 1.2, 2.0)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, 0.6, 0)
+
+[node name="CounterweightMesh" type="MeshInstance3D" parent="Superstructure"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(1.6, 0.6, 0.8)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -1.2)
+
+; -- Boom (pivots at superstructure front, rotates X) --
+[node name="BoomPivot" type="Node3D" parent="Superstructure"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 1.0)
+
+[node name="Boom" type="Node3D" parent="BoomPivot"]
+
+[node name="BoomMesh" type="MeshInstance3D" parent="Boom"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(0.3, 0.3, 2.8)}))
+transform = Transform3D(1, 0, 0, 0, 0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 1.0, 1.4)
+
+; -- Arm (pivots at boom tip) --
+[node name="ArmPivot" type="Node3D" parent="Boom"]
+transform = Transform3D(1, 0, 0, 0, 0.906308, -0.422618, 0, 0.422618, 0.906308, 0, 1.9, 2.6)
+
+[node name="Arm" type="Node3D" parent="ArmPivot"]
+
+[node name="ArmMesh" type="MeshInstance3D" parent="Arm"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(0.22, 0.22, 1.8)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.9)
+
+; -- Bucket (pivots at arm tip) --
+[node name="BucketPivot" type="Node3D" parent="Arm"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.8)
+
+[node name="Bucket" type="Node3D" parent="BucketPivot"]
+
+[node name="BucketMesh" type="MeshInstance3D" parent="Bucket"]
+mesh = BoxMesh(new("BoxMesh", {"size": Vector3(0.9, 0.6, 0.5)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0.25)
+
+; Trigger volume — used by BucketInteraction C++ to detect voxel overlap
+[node name="BucketVolume" type="Area3D" parent="Bucket"]
+
+[node name="BucketVolumeShape" type="CollisionShape3D" parent="BucketVolume"]
+shape = BoxShape3D(new("BoxShape3D", {"size": Vector3(0.85, 0.55, 0.45)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0.25)
+
+; Contents volume — particles inside this area are "held" by bucket
+[node name="BucketContents" type="Area3D" parent="Bucket"]
+
+[node name="BucketContentsShape" type="CollisionShape3D" parent="BucketContents"]
+shape = BoxShape3D(new("BoxShape3D", {"size": Vector3(0.80, 0.50, 0.40)}))
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.18, 0.22)

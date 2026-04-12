@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="uid://main_world"]
+
+[ext_resource type="Script" path="res://scripts/terrain_manager.gd" id="1_terrain"]
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="2_game"]
+[ext_resource type="PackedScene" path="res://scenes/world/terrain.tscn" id="3_terrain_scene"]
+[ext_resource type="PackedScene" path="res://scenes/machines/excavator.tscn" id="4_excavator"]
+
+[node name="World" type="Node3D"]
+script = ExtResource("2_game")
+
+[node name="Environment" type="Node3D" parent="."]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 20, 0)
+light_color = Color(1, 0.95, 0.85, 1)
+light_energy = 2.0
+shadow_enabled = true
+directional_shadow_mode = 2
+directional_shadow_split_1 = 0.1
+directional_shadow_split_2 = 0.25
+directional_shadow_split_3 = 0.5
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment"]
+
+[node name="Terrain" parent="." instance=ExtResource("3_terrain_scene")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="Excavator" parent="." instance=ExtResource("4_excavator")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 2)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 8, 6, 8)
+fov = 60.0

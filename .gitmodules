@@ -1,0 +1,14 @@
+[submodule "physics/godot-cpp"]
+    path = physics/godot-cpp
+    url = https://github.com/godotengine/godot-cpp.git
+    branch = godot-4.4
+
+[submodule "third_party/godot_voxel"]
+    path = third_party/godot_voxel
+    url = https://github.com/Zylann/godot_voxel.git
+
+[submodule "third_party/chrono"]
+    path = third_party/chrono
+    url = https://github.com/projectchrono/chrono.git
+    # Only clone this when enabling DIGGER_USE_CHRONO (Phase 6).
+    # Run: git submodule update --init third_party/chrono

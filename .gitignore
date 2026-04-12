@@ -1,0 +1,44 @@
+# Godot 4 editor artefacts
+.godot/
+*.import
+*.uid
+game/export_presets.cfg
+
+# Compiled GDExtension libraries (built locally — not committed)
+game/bin/*.so
+game/bin/*.dll
+game/bin/*.dylib
+
+# CMake build directories
+physics/build*/
+physics/.cmake/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# godot-cpp submodule build artefacts
+physics/godot-cpp/bin/
+physics/godot-cpp/gen/
+
+# Chrono build artefacts
+third_party/chrono/build*/
+
+# macOS
+.DS_Store
+
+# Linux editor swap files
+*.swp
+*.swo
+
+# CLion / VS Code
+.idea/
+.vscode/
+*.code-workspace
+
+# Rider
+.rider/
+
+# Python bytecode (from any build scripts)
+__pycache__/
+*.pyc
