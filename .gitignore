@@ -2,27 +2,38 @@
 .godot/
 *.import
 *.uid
-game/export_presets.cfg
+godot/game/export_presets.cfg
 
 # Compiled GDExtension libraries (built locally — not committed)
-game/bin/*.so
-game/bin/*.dll
-game/bin/*.dylib
+godot/game/bin/*.so
+godot/game/bin/*.dll
+godot/game/bin/*.dylib
 
 # CMake build directories
-physics/build*/
-physics/.cmake/
+godot/physics/build*/
+godot/physics/.cmake/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
 
 # godot-cpp submodule build artefacts
-physics/godot-cpp/bin/
-physics/godot-cpp/gen/
+godot/physics/godot-cpp/bin/
+godot/physics/godot-cpp/gen/
 
-# Chrono build artefacts
+# godot_voxel submodule build artefacts
+godot/third_party/godot_voxel/bin/
+
+# Chrono build artefacts (shared across engine experiments)
 third_party/chrono/build*/
+
+# Future engine experiment artefacts
+bevy/target/
+unreal/**/.vs/
+unreal/**/Binaries/
+unreal/**/Intermediate/
+unreal/**/Saved/
+unreal/**/*.VC.db
 
 # macOS
 .DS_Store

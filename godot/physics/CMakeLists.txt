@@ -15,7 +15,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # ---------------------------------------------------------------------------
 # godot-cpp (header-only bindings shipped as submodule)
 # ---------------------------------------------------------------------------
-# Expected layout: physics/godot-cpp/ (git submodule of godotengine/godot-cpp)
+# Expected layout: godot/physics/godot-cpp/ (git submodule of godotengine/godot-cpp)
 set(GODOT_CPP_DIR "${CMAKE_CURRENT_SOURCE_DIR}/godot-cpp")
 if(NOT EXISTS "${GODOT_CPP_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
@@ -75,7 +75,7 @@ set_target_properties(digger_physics PROPERTIES
     OUTPUT_NAME     "libdigger_physics"
 )
 
-# Put the built library into game/bin/ where the .gdextension file expects it
+# Put the built library into godot/game/bin/ where the .gdextension file expects it
 set(GAME_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../game/bin")
 
 add_custom_command(TARGET digger_physics POST_BUILD
