@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digger Sim</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 64px 24px 48px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #e6edf3;
+    }
+
+    header p {
+      margin-top: 10px;
+      font-size: 1rem;
+      color: #8b949e;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      width: 100%;
+      max-width: 760px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 24px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+
+    .card:hover {
+      border-color: #79c0ff;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .card h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #e6edf3;
+    }
+
+    .card p {
+      font-size: 0.875rem;
+      color: #8b949e;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .tag {
+      font-size: 0.75rem;
+      font-family: monospace;
+      color: #79c0ff;
+      background: rgba(121, 192, 255, 0.08);
+      border: 1px solid rgba(121, 192, 255, 0.2);
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+
+    footer {
+      margin-top: 64px;
+      font-size: 0.8rem;
+      color: #484f58;
+    }
+
+    footer a {
+      color: #8b949e;
+      text-decoration: none;
+    }
+
+    footer a:hover { color: #e6edf3; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Digger Sim</h1>
+    <p>Physics simulation experiments</p>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="./mujoco-viewer/">
+      <h2>MuJoCo Viewer</h2>
+      <p>Articulated digger controlled in real time. Keyboard-driven turret, boom, stick, and bucket joints simulated with MuJoCo WASM.</p>
+      <div class="tags">
+        <span class="tag">MuJoCo</span>
+        <span class="tag">Three.js</span>
+        <span class="tag">JavaScript</span>
+      </div>
+    </a>
+
+    <a class="card" href="./experiments/physics-sim/">
+      <h2>Physics Sim</h2>
+      <p>Rigid-body sandbox with falling boxes and a granular gravel pile. Powered by Rapier3D running natively in the browser.</p>
+      <div class="tags">
+        <span class="tag">Rapier3D</span>
+        <span class="tag">Three.js</span>
+        <span class="tag">TypeScript</span>
+      </div>
+    </a>
+  </div>
+
+  <footer>
+    <a href="https://github.com/qingyouzhao/digger-sim">github.com/qingyouzhao/digger-sim</a>
+  </footer>
+
+</body>
+</html>
