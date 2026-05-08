@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digger Sim – MuJoCo Viewer</title>
+
+  <!--
+    Adds COOP/COEP headers via a service worker so SharedArrayBuffer is
+    available on static hosts (GitHub Pages) that can't set headers natively.
+    Must be the first script on the page.
+  -->
+  <script src="./coi-serviceworker.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0d1117; overflow: hidden; font-family: monospace; }
+    #canvas { display: block; width: 100vw; height: 100vh; }
+
+    #hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      color: #e6edf3;
+      font-size: 12px;
+      line-height: 1.7;
+      background: rgba(13, 17, 23, 0.75);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      user-select: none;
+      pointer-events: none;
+    }
+    #hud strong { color: #79c0ff; font-size: 13px; }
+
+    #status {
+      position: absolute;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #e6edf3;
+      font-size: 13px;
+      background: rgba(13, 17, 23, 0.85);
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+
+  <div id="hud">
+    <strong>Digger Sim</strong><br/>
+    Drag · orbit &nbsp;|&nbsp; Scroll · zoom<br/>
+    <br/>
+    <strong>Controls</strong><br/>
+    Q / E &nbsp;· turret<br/>
+    W / S &nbsp;· boom<br/>
+    A / D &nbsp;· stick<br/>
+    Z / X &nbsp;· bucket
+  </div>
+
+  <div id="status">Loading MuJoCo WASM…</div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
