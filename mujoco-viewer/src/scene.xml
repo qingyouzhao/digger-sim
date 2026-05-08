@@ -1,0 +1,79 @@
+<mujoco model="digger">
+  <compiler angle="degree"/>
+  <option gravity="0 0 -9.81" timestep="0.005"/>
+
+  <asset>
+    <material name="ground"    rgba="0.45 0.60 0.35 1"/>
+    <material name="orange"    rgba="0.90 0.45 0.08 1"/>
+    <material name="dark"      rgba="0.35 0.20 0.06 1"/>
+    <material name="steel"     rgba="0.65 0.65 0.65 1"/>
+    <material name="chassis"   rgba="0.25 0.25 0.25 1"/>
+  </asset>
+
+  <worldbody>
+    <light pos="3 3 8" dir="-0.3 -0.3 -1" diffuse="1 1 1" specular="0.3 0.3 0.3"/>
+    <light pos="-3 3 6" dir="0.3 -0.3 -1" diffuse="0.4 0.4 0.6"/>
+
+    <!-- Ground plane -->
+    <geom name="ground" type="plane" size="15 15 0.1" material="ground" condim="3"/>
+
+    <!-- ── Fixed base / undercarriage ─────────────────────────── -->
+    <body name="undercarriage" pos="0 0 0.28">
+      <geom type="box"      size="0.55 0.35 0.18" material="chassis"/>
+      <geom type="cylinder" size="0.20 0.55" pos="0 0 -0.14" euler="90 0 0" material="chassis"/>
+
+      <!-- ── Turret (rotates around Z) ──────────────────────── -->
+      <body name="turret" pos="0 0 0.20">
+        <joint name="turret" type="hinge" axis="0 0 1"
+               range="-150 150" damping="20" stiffness="0"/>
+        <geom type="box"      size="0.40 0.28 0.18" material="orange"/>
+        <geom type="cylinder" size="0.12 0.18" pos="0 0 0.18" material="chassis"/>
+
+        <!-- ── Boom (pitches around Y) ─────────────────────── -->
+        <body name="boom" pos="0.28 0 0.18">
+          <joint name="boom" type="hinge" axis="0 1 0"
+                 range="-5 75" damping="15" stiffness="0"/>
+          <geom type="capsule" fromto="0 0 0  1.10 0 0.42"
+                size="0.075" material="orange"/>
+
+          <!-- ── Stick (pitches around Y) ────────────────── -->
+          <body name="stick" pos="1.10 0 0.42">
+            <joint name="stick" type="hinge" axis="0 1 0"
+                   range="-125 5" damping="10" stiffness="0"/>
+            <geom type="capsule" fromto="0 0 0  0.85 0 -0.10"
+                  size="0.058" material="dark"/>
+
+            <!-- ── Bucket (pitches around Y) ───────────── -->
+            <body name="bucket" pos="0.85 0 -0.10">
+              <joint name="bucket" type="hinge" axis="0 1 0"
+                     range="-100 100" damping="5" stiffness="0"/>
+
+              <!-- Main bucket shell -->
+              <geom type="box" size="0.16 0.13 0.10"
+                    pos="0.06 0 -0.02" material="steel"/>
+
+              <!-- Back plate -->
+              <geom type="box" size="0.03 0.13 0.12"
+                    pos="-0.10 0 -0.02" material="steel"/>
+
+              <!-- Three teeth -->
+              <geom type="box" size="0.035 0.015 0.07"
+                    pos="0.21 -0.08  -0.07" material="steel"/>
+              <geom type="box" size="0.035 0.015 0.07"
+                    pos="0.21  0.00  -0.07" material="steel"/>
+              <geom type="box" size="0.035 0.015 0.07"
+                    pos="0.21  0.08  -0.07" material="steel"/>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="act_turret" joint="turret" gear="300"  ctrlrange="-1 1"/>
+    <motor name="act_boom"   joint="boom"   gear="600"  ctrlrange="-1 1"/>
+    <motor name="act_stick"  joint="stick"  gear="400"  ctrlrange="-1 1"/>
+    <motor name="act_bucket" joint="bucket" gear="150"  ctrlrange="-1 1"/>
+  </actuator>
+</mujoco>
