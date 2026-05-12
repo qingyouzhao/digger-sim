@@ -1,8 +1,27 @@
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import load_mujoco from 'mujoco-wasm'
-import wasmUrl from 'mujoco-wasm/dist/mujoco_wasm.wasm?url'
 import sceneXml from './scene.xml?raw'
+
+// Load the vendored Emscripten MuJoCo module from public/.
+// The script uses the global Module object pattern; we set window.Module
+// before injecting the script so it picks up our locateFile / callbacks.
+function load_mujoco(opts = {}) {
+  return new Promise((resolve, reject) => {
+    const base = new URL('.', document.baseURI).href
+    window.Module = {
+      ...opts,
+      locateFile: (f) => new URL(f, base).href,
+      onRuntimeInitialized() {
+        if (opts.onRuntimeInitialized) opts.onRuntimeInitialized()
+        resolve(window.Module)
+      },
+    }
+    const s = document.createElement('script')
+    s.onerror = reject
+    s.src = new URL('mujoco_wasm.js', base).href
+    document.head.appendChild(s)
+  })
+}
 
 // MuJoCo geom type constants (mjGeomType enum)
 const GEOM = { PLANE: 0, SPHERE: 2, CAPSULE: 3, CYLINDER: 5, BOX: 6 }
@@ -56,7 +75,6 @@ let mj, model, state, sim
 
 try {
   mj = await load_mujoco({
-    locateFile: (f) => (f.endsWith('.wasm') ? wasmUrl : f),
     print: () => {},
     printErr: (msg) => console.warn('[mujoco]', msg),
   })
