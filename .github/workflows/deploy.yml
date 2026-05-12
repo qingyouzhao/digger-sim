@@ -26,11 +26,11 @@ jobs:
 
       - name: Build mujoco-viewer
         working-directory: mujoco-viewer
-        run: npm ci && npm run build
+        run: npm install && npm run build
 
       - name: Build physics-sim
         working-directory: experiments/physics-sim
-        run: npm ci && npm run build
+        run: npm install && npm run build
 
       - name: Assemble site
         run: |
