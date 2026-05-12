@@ -8,7 +8,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "mujoco-wasm": "0.3.2",
     "three": "^0.164.0"
   },
   "devDependencies": {
