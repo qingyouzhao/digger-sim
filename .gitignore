@@ -3,3 +3,9 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Gas City runtime — never commit these
+.gc/
+.gemini/
+.runtime/
+digger-sim/
