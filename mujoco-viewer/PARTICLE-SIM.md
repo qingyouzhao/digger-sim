@@ -1,143 +1,109 @@
-# 3D Particle Simulation Investigation for Digger-Sim
+# 3D Particle Simulation Research & Proposal
 
-This document evaluates approaches for implementing a performant 3D particle simulation within the existing Three.js + MuJoCo WASM stack.
+This document evaluates approaches for implementing a performant 3D particle simulation for `digger-sim` to represent dirt, sand, and debris.
 
 ## 1. Approach Comparison
 
-| Approach | Max Particles | CPU ms (Budget ≤2ms) | GPU ms (Budget ≤4ms) | Complexity | Verdict |
+| Approach | Capacity (Particles) | CPU ms | GPU ms | Complexity | Browser Support |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **A. InstancedMesh (CPU)** | 5k – 15k | 1.0 – 2.0ms | 0.5ms | Low | **Best for V1** |
-| **B. GPGPU (WebGL2)** | 100k – 500k | 0.2ms | 2.0 – 3.5ms | High | **Target for V2** |
-| **C. WebGPU Compute** | 500k+ | <0.1ms | 1.0 – 2.5ms | Very High | Experimental |
-| **D. Worker + SAB** | 20k – 40k | 0.5ms (main) | 0.5ms | Medium | Overkill |
-| **E. MuJoCo Native** | 100 – 300 | 5.0 – 15.0ms | 0.2ms | Low | Too slow |
+| **A. InstancedMesh (CPU)** | 1k – 10k | 1.0 – 2.5 | < 0.5 | Low | Universal |
+| **B. GPGPU (Ping-pong)** | 50k – 200k | < 0.5 | 1.5 – 3.0 | High | WebGL2 |
+| **C. WebGPU Compute** | 100k – 500k | < 0.1 | < 1.0 | Very High | Experimental |
+| **D. Worker + SAB** | 5k – 15k | 0.5 (main) | < 0.5 | Medium | Cross-origin isolated |
+| **E. MuJoCo Geoms** | 50 – 200 | 5.0 – 15.0 | < 0.5 | Medium | Universal |
 
-### Analysis
+## 2. Recommended Approach: Three.js InstancedMesh (CPU-driven)
 
-*   **Approach A (CPU InstancedMesh):** The most straightforward to integrate with the current `main.js`. Modern JS engines can easily handle the math for ~10k particles within 2ms. The main bottleneck is the upload of the `instanceMatrix` buffer to the GPU, but at 10k particles (~640KB), this is negligible.
-*   **Approach B (GPGPU):** Ideal for "sand-like" behavior where hundreds of thousands of particles are needed. Requires custom GLSL for simulation logic (gravity, floor collision). Integration is more complex as it involves ping-pong FBOs.
-*   **Approach E (MuJoCo Native):** While tempting for perfect collisions, MuJoCo is a high-precision rigid body solver. Adding hundreds of small dynamic geoms will cause the physics timestep to explode, breaking the 60fps requirement.
+### Rationale
+For a kids' digger game, the particle count requirement is modest (50–200 particles per "burst"). Even with multiple bursts active, the total particle count is unlikely to exceed 5,000. 
 
----
+**InstancedMesh (CPU)** is the optimal choice because:
+1. **Reliability:** No reliance on experimental WebGPU or complex GPGPU state management.
+2. **Performance:** Modern JS engines can easily update 5k matrices within the 2ms CPU budget.
+3. **Ease of Integration:** Directly hooks into the existing Three.js scene without requiring renderer swaps.
+4. **Collision:** Simple analytical ground collision (z=0) is sufficient for visual particles, avoiding the overhead of MuJoCo's solver.
 
-## 2. Performance Budget Definition
+## 3. Performance Budget (Target: 60fps / 16.7ms)
 
-Target: **60 FPS** (16.7ms frame time)
+*   **Total Frame Budget:** 16.7ms
+*   **MuJoCo Step:** ~4.0ms
+*   **Particle Update (CPU):** 1.5ms (for ~5k particles)
+*   **Particle Render (GPU):** 0.5ms
+*   **Other Rendering:** 4.0ms
+*   **Headroom:** ~6.7ms
 
-| Component | Target Allocation | Notes |
-| :--- | :--- | :--- |
-| **MuJoCo Physics** | 6.0ms | Includes `sim.step()` (multiple per frame) |
-| **Three.js Scene Sync** | 2.0ms | Updating mesh transforms from MuJoCo |
-| **Particle Simulation** | **2.0ms (CPU)** | Euler integration + bucket collision |
-| **Rendering (GPU)** | **4.0ms** | Particle draw calls + main scene |
-| **Overhead/Misc** | 2.7ms | Input, UI, browser jitter |
-
-**Max Memory:** 32MB. An `InstancedMesh` with 10k particles uses:
-*   `instanceMatrix`: 10,000 * 16 * 4 bytes = 640 KB
-*   `instanceColor` (optional): 10,000 * 3 * 4 bytes = 120 KB
-*   Total: **< 1 MB** (well within the 32MB limit).
-
----
-
-## 3. Visual Design for Digging
-
-### Behaviors
-1.  **Dig Event:** Triggered when the bucket enters a "dirt zone" with high velocity or force. Spawns a burst of 50–200 particles.
-2.  **Scoop:** Particles inside the bucket volume are constrained to its transform or given a "velocity bias" to stay inside.
-3.  **Dump:** When the bucket tilt exceeds a threshold, particles are released from the constraint and given initial downward velocity.
-4.  **Settle:** Particles stop moving upon hitting the ground plane. Despawn after ~3s to keep the pool fresh.
-
-### Appearance
-*   **Geometry:** Low-poly `TetrahedronGeometry` or `BoxGeometry` (3–4 faces).
-*   **Material:** `MeshLambertMaterial` with `instanceColor` to provide variation (brown, grey, tan).
-*   **Scale:** Randomize scale between 0.05 and 0.15 to prevent a "grid" look.
-
----
-
-## 4. Integration with Existing Renderer
-
-### Hook Points
-The particle system should update **after** the MuJoCo step but **before** the final render.
+## 4. V1 Implementation Sketch
 
 ```javascript
-// main.js loop
-function animate() {
-  applyControls();
-  for (let s = 0; s < steps; s++) sim.step(); // MuJoCo Step
+// Simple Particle Engine Hook
+const MAX_PARTICLES = 5000;
+const particleGeo = new THREE.BoxGeometry(0.05, 0.05, 0.05);
+const particleMat = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+const instancedMesh = new THREE.InstancedMesh(particleGeo, particleMat, MAX_PARTICLES);
+instancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(instancedMesh);
 
-  const bucketContact = checkBucketContact(sim); // Custom logic
-  if (bucketContact) {
-    particleSystem.spawn(bucketPos, bucketVel);
-  }
-
-  particleSystem.update(elapsed); // Particle logic
-  syncMeshes();
-  renderer.render(scene, camera);
-}
-```
-
-### Dig Detection
-Detecting a "dig" can be done by:
-1.  **MuJoCo Contact Forces:** Checking `sim.data.contact` for collisions involving the bucket geoms.
-2.  **Kinematic Threshold:** If the bucket is below `Z=0.2` and moving with `velocity.z < -0.5`.
-
----
-
-## 5. Recommended Implementation Plan (V1)
-
-**Approach:** CPU-driven `InstancedMesh`.
-
-### Data Structure
-```javascript
 const particles = {
-  pos: new Float32Array(MAX_COUNT * 3),
-  vel: new Float32Array(MAX_COUNT * 3),
-  life: new Float32Array(MAX_COUNT), // 0 to 1
-  count: 0
+  pos: new Float32Array(MAX_PARTICLES * 3),
+  vel: new Float32Array(MAX_PARTICLES * 3),
+  life: new Float32Array(MAX_PARTICLES), // 0 to 1
+  count: 0,
+  nextIdx: 0
 };
-```
 
-### V1 Sketch (Pseudocode)
-```javascript
-class ParticleSystem {
-  constructor(maxCount, scene) {
-    this.mesh = new THREE.InstancedMesh(
-      new THREE.TetrahedronGeometry(0.1),
-      new THREE.MeshLambertMaterial(),
-      maxCount
-    );
-    scene.add(this.mesh);
-    // ... init buffers
+const _dummy = new THREE.Object3D();
+
+function spawnBurst(x, y, z, amount = 50) {
+  for (let i = 0; i < amount; i++) {
+    const idx = particles.nextIdx;
+    particles.pos[idx * 3] = x;
+    particles.pos[idx * 3 + 1] = y;
+    particles.pos[idx * 3 + 2] = z;
+    
+    // Random velocity
+    particles.vel[idx * 3] = (Math.random() - 0.5) * 2;
+    particles.vel[idx * 3 + 1] = (Math.random() - 0.5) * 2;
+    particles.vel[idx * 3 + 2] = Math.random() * 4;
+    
+    particles.life[idx] = 1.0;
+    particles.nextIdx = (particles.nextIdx + 1) % MAX_PARTICLES;
   }
+}
 
-  update(dt) {
-    for (let i = 0; i < this.count; i++) {
-      // Gravity
-      this.vel[i*3 + 2] -= 9.8 * dt;
-      // Advection
-      this.pos[i*3] += this.vel[i*3] * dt;
-      this.pos[i*3+1] += this.vel[i*3+1] * dt;
-      this.pos[i*3+2] += this.vel[i*3+2] * dt;
-
-      // Ground collision
-      if (this.pos[i*3+2] < 0) {
-        this.pos[i*3+2] = 0;
-        this.vel[i*3] *= 0.5; // Friction
-        this.vel[i*3+1] *= 0.5;
-        this.vel[i*3+2] = 0;
-      }
-
-      // Update matrix
-      _dummy.position.set(this.pos[i*3], this.pos[i*3+1], this.pos[i*3+2]);
-      _dummy.updateMatrix();
-      this.mesh.setMatrixAt(i, _dummy.matrix);
+function updateParticles(dt) {
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    if (particles.life[i] <= 0) continue;
+    
+    // Gravity
+    particles.vel[i * 3 + 2] -= 9.8 * dt;
+    
+    // Advect
+    particles.pos[i * 3] += particles.vel[i * 3] * dt;
+    particles.pos[i * 3 + 1] += particles.vel[i * 3 + 1] * dt;
+    particles.pos[i * 3 + 2] += particles.vel[i * 3 + 2] * dt;
+    
+    // Ground Collision (z=0)
+    if (particles.pos[i * 3 + 2] < 0) {
+      particles.pos[i * 3 + 2] = 0;
+      particles.vel[i * 3] *= 0.5; // Friction
+      particles.vel[i * 3 + 1] *= 0.5;
+      particles.vel[i * 3 + 2] *= -0.3; // Bounce
     }
-    this.mesh.instanceMatrix.needsUpdate = true;
+    
+    particles.life[i] -= dt / 3.0; // 3s lifespan
+    
+    _dummy.position.set(particles.pos[i * 3], particles.pos[i * 3 + 1], particles.pos[i * 3 + 2]);
+    _dummy.scale.setScalar(particles.life[i]);
+    _dummy.updateMatrix();
+    instancedMesh.setMatrixAt(i, _dummy.matrix);
   }
+  instancedMesh.instanceMatrix.needsUpdate = true;
 }
 ```
 
-### Three.js r164 Specific Notes
-*   **InstancedMesh:** Ensure `count` property is used to limit draw calls to only active particles.
-*   **Coloring:** Use `instanceColor` attribute for variety without multiple materials.
-*   **Matrix updates:** For high-performance, consider using a custom shader that reads positions from a `DataTexture` even with CPU-driven logic to avoid full matrix reconstruction in JS.
+## 5. Integration Notes (Three.js r164)
+
+*   **InstancedMesh.count:** Use this to limit the number of particles rendered if needed.
+*   **computeFrustumCulled:** Set to `false` if particles move far from the origin, or update the bounding box manually.
+*   **Frustum Culling:** For high-performance, ensure `instancedMesh.frustumCulled = true` but be aware that the bounding sphere needs to encompass all active particles.
+*   **Interleaving:** For better cache performance, consider using a single `Float32Array` for [x, y, z, vx, vy, vz, life].
