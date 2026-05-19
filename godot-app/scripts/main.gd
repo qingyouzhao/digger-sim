@@ -1,9 +1,18 @@
-extends Node2D
+extends Node3D
 
-func _ready() -> void:
-	print("Godot Digger loaded")
+const ORBIT_SPEED := 0.4
+const ORBIT_RADIUS := 10.0
+const ORBIT_HEIGHT := 5.0
 
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
-		if event.keycode == KEY_ESCAPE:
-			get_tree().quit()
+var _angle := 0.0
+
+@onready var _camera: Camera3D = $Camera3D
+
+func _process(delta: float) -> void:
+	_angle += delta * ORBIT_SPEED
+	_camera.position = Vector3(
+		sin(_angle) * ORBIT_RADIUS,
+		ORBIT_HEIGHT,
+		cos(_angle) * ORBIT_RADIUS
+	)
+	_camera.look_at(Vector3.ZERO)
