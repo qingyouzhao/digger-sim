@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'mujoco-viewer/**'
       - 'experiments/physics-sim/**'
+      - 'godot-app/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch:
 
@@ -41,12 +42,31 @@ jobs:
         working-directory: experiments/physics-sim
         run: npm install && npm run build
 
+      - name: Setup Godot
+        run: |
+          GODOT_VERSION=4.3-stable
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip" -O /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          mv "/tmp/godot/Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          chmod +x /usr/local/bin/godot
+          wget -q "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_export_templates.tpz" -O /tmp/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
+          unzip -q /tmp/templates.tpz -d /tmp/templates
+          mv /tmp/templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
+
+      - name: Export Godot app
+        run: |
+          mkdir -p godot-app/export
+          godot --headless --path godot-app --export-release "Web" export/index.html
+
       - name: Assemble site
         run: |
-          mkdir -p staging/mujoco-viewer staging/experiments/physics-sim
+          mkdir -p staging/mujoco-viewer staging/experiments/physics-sim staging/godot-app
           cp index.html staging/
           cp -r mujoco-viewer/dist/. staging/mujoco-viewer/
           cp -r experiments/physics-sim/dist/. staging/experiments/physics-sim/
+          cp -r godot-app/export/. staging/godot-app/
+          cp mujoco-viewer/public/coi-serviceworker.js staging/godot-app/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
