@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import path from 'path'
 
 export default defineConfig({
   // './' makes all asset paths relative — dist/ can be placed in any subdirectory
@@ -11,6 +12,10 @@ export default defineConfig({
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
+  },
+
+  resolve: {
+    alias: { '@shared': path.resolve(__dirname, '../shared') },
   },
 
   build: {
